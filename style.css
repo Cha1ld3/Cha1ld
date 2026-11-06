@@ -52,23 +52,23 @@ nav {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* 将内容推向偏左的位置，因为右侧要留给薛之谦 */
-    align-items: flex-start; 
+    align-items: flex-start; /* 让文字靠左 */
     text-align: left;
-    padding-left: 10%; /* 左侧留出边距 */
+    padding-left: 10%; /* 左侧留白，让文字不贴边 */
     
-    /* 重点来了：多重背景魔法 */
-    /* 第一层是渐变：从左侧的深海蓝(不透明)，过渡到右侧的透明，露出原图 */
-    /* 第二层是你的原图：设置为靠右、不重复、完整显示(contain) */
+    /* 魔法背景：第一层是左侧深蓝到透明的渐变，第二层是你的图 */
     background-image: 
-        linear-gradient(to right, #0f172a 35%, rgba(15, 23, 42, 0) 70%), 
-        url('bg1.png'); 
+        linear-gradient(to right, #0f172a 40%, rgba(15, 23, 42, 0) 70%), 
+        url('bg1.png');
     
-    background-position: center, right center; /* 渐变居中，图片靠右居中 */
-    background-size: cover, contain; /* 渐变铺满，图片按原比例完整显示 */
+    /* 图片靠右对齐 */
+    background-position: center, right center; 
+    
+    /* 关键点：渐变铺满100%，图片固定高度（刚好撑满屏幕高）并保持比例 */
+    background-size: 100% 100%, auto 100%; 
+    
     background-repeat: no-repeat;
-    
-    background-color: #0f172a; /* 兜底底色 */
+    background-color: #0f172a; 
 }
 
 .hero h1 {

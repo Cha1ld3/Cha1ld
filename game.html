@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的小游戏</title>
+    <!-- 这里继续引入你主页的样式表，保持风格统一 -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 针对小游戏页面的专属样式 -->
+    <style>
+        .game-container {
+            text-align: center;
+            padding: 50px 20px;
+            background-color: #1e293b; /* 比主页稍微亮一点的卡片色 */
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 50px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .game-area {
+            width: 100%;
+            height: 300px;
+            background-color: #0f172a;
+            border: 2px dashed #38bdf8;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        /* 覆盖一下主页返回按钮的样式 */
+        .btn-back {
+            display: inline-block;
+            margin-top: 20px;
+            color: #38bdf8;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏（复用你主页的结构，但链接指向主页） -->
+    <nav>
+        <div class="logo">我的小游戏</div>
+        <ul class="nav-links">
+            <li><a href=" ">返回首页</a ></li>
+        </ul>
+    </nav>
+
+    <!-- 游戏主区域 -->
+    <div class="game-container">
+        <h2>准备开始游戏</h2>
+        <p>这是你未来小游戏的地盘</p >
+        
+        <!-- 以后你的游戏画面（比如方块、小人）就放在这里 -->
+        <div class="game-area" id="gameBoard">
+            点击下方按钮开始
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="btn-group">
+            <button class="btn" id="startBtn" style="border: none; cursor: pointer;">开始游戏</button>
+        </div>
+        
+        <a href="index.html" class="btn-back">← 返回主页</a >
+    </div>
+
+    <!-- 预留 script 标签，下一步写 JavaScript 就写在这 -->
+    <script>
+        // 简单测试一下按钮能不能用
+        document.getElementById('startBtn').addEventListener('click', function() {
+            document.getElementById('gameBoard').innerText = "游戏已开始！（现在这里还没内容）";
+        });
+    </script>
+</body>
+</html>

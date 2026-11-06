@@ -56,15 +56,18 @@ nav {
     text-align: left;
     padding-left: 10%; 
     
-    /* 注意：这里改成了 xue.jpg，并且用了更兼容的渐变写法 */
-    background-image: 
-        linear-gradient(to right, rgba(15, 23, 42, 1) 40%, rgba(15, 23, 42, 0) 70%), 
-        url('xue.jpg');
-    
-    background-position: center, right center; 
-    background-size: 100% 100%, auto 100%; 
-    background-repeat: no-repeat;
+    /* 左侧的基础背景色 */
     background-color: #0f172a; 
+    
+    /* 使用 background 组合简写，让语法最简洁 */
+    /* 1. 图片靠右，不重复，保持原有比例(contain) */
+    /* 2. 渐变覆盖在图片上面，从左向右 */
+    background-image: 
+        linear-gradient(to right, rgba(15, 23, 42, 1) 30%, rgba(15, 23, 42, 0) 60%),
+        url('xue.jpg');
+    background-position: center, right center; 
+    background-size: cover, contain; /* 重点改成了 contain，保证图片绝对不变形 */
+    background-repeat: no-repeat;
 }
 
 .hero h1 {

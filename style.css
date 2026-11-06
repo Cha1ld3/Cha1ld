@@ -47,22 +47,23 @@ nav {
 }
 
 /* 首页横幅 */
+/* 首页横幅：左右分栏布局 */
 .hero {
     height: 80vh;
-    display: flex;           /* 开启左右分栏 */
-    justify-content: space-between; /* 文字在左，图片在右 */
-    align-items: center;     /* 垂直居中 */
-    padding: 0 10%;          /* 左右留白 */
+    display: flex;
+    justify-content: space-between; /* 左右分开 */
+    align-items: center; /* 垂直居中 */
+    padding: 0 8%; /* 左右留点边距 */
     
-    /* 左侧渐变主色调，右侧用纯深色托底 */
+    /* 左侧深色渐变，右侧稍微亮一点点，衬托图片 */
     background: linear-gradient(to right, #0f172a 40%, #1e293b 100%);
-    overflow: hidden;
+    overflow: hidden; /* 防止图片超出边界 */
 }
 
-/* 左侧文字样式 */
+/* 左侧文字 */
 .hero-text {
-    width: 50%; /* 占一半宽度 */
-    z-index: 2; /* 保证文字在图片上面 */
+    width: 50%;
+    z-index: 2;
 }
 
 .hero-text h1 {
@@ -78,25 +79,26 @@ nav {
     text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.9);
 }
 
-/* 右侧图片区域样式 */
+/* 右侧图片区域 */
 .hero-image {
-    width: 45%; /* 占右边 45% */
-    height: 100%;
+    width: 45%;
+    height: 80%;
     display: flex;
-    justify-content: flex-end; /* 靠右对齐 */
+    justify-content: center;
     align-items: center;
 }
 
+/* 图片本身的样式 */
 .hero-image img {
-    height: 90%;          /* 图片高度占区域的90% */
-    width: auto;          /* 宽度自动，不变形 */
+    height: 100%;          /* 高度撑满 */
+    width: auto;           /* 宽度自动，绝对不变形 */
     max-width: 100%;
-    border-radius: 15px;  /* 给图片加个圆角，更好看 */
-    box-shadow: -10px 10px 30px rgba(0,0,0,0.5); /* 给图片加个立体阴影 */
+    border-radius: 20px;   /* 圆角 */
+    box-shadow: -15px 15px 30px rgba(0,0,0,0.6); /* 立体阴影 */
     
-    /* 关键：用遮罩把图片左侧边缘融进深色背景里！ */
-    mask-image: linear-gradient(to right, transparent 0%, black 15%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%);
+    /* 左侧淡出融图效果（让图片左边和背景融合） */
+    mask-image: linear-gradient(to right, transparent 0%, black 20%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%);
 }
 
 .hero h1 {

@@ -52,21 +52,17 @@ nav {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-start; /* 让文字靠左 */
+    align-items: flex-start; 
     text-align: left;
-    padding-left: 10%; /* 左侧留白，让文字不贴边 */
+    padding-left: 10%; 
     
-    /* 魔法背景：第一层是左侧深蓝到透明的渐变，第二层是你的图 */
+    /* 注意：这里改成了 xue.jpg，并且用了更兼容的渐变写法 */
     background-image: 
-        linear-gradient(to right, #0f172a 40%, rgba(15, 23, 42, 0) 70%), 
+        linear-gradient(to right, rgba(15, 23, 42, 1) 40%, rgba(15, 23, 42, 0) 70%), 
         url('xue.jpg');
     
-    /* 图片靠右对齐 */
     background-position: center, right center; 
-    
-    /* 关键点：渐变铺满100%，图片固定高度（刚好撑满屏幕高）并保持比例 */
     background-size: 100% 100%, auto 100%; 
-    
     background-repeat: no-repeat;
     background-color: #0f172a; 
 }

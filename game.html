@@ -3,83 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的小游戏</title>
-    <!-- 这里继续引入你主页的样式表，保持风格统一 -->
+    <title>记忆翻牌小游戏</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- 针对小游戏页面的专属样式 -->
     <style>
-        .game-container {
-            text-align: center;
-            padding: 50px 20px;
-            background-color: #1e293b; /* 比主页稍微亮一点的卡片色 */
-            border-radius: 10px;
-            max-width: 600px;
-            margin: 50px auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .game-area {
-            width: 100%;
-            height: 300px;
+        /* 页面基础布局，复用首页的深色背景 */
+        body {
             background-color: #0f172a;
-            border: 2px dashed #38bdf8;
-            border-radius: 8px;
-            margin: 20px 0;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 顶部信息栏 */
+        .game-header {
+            text-align: center;
+            padding: 20px;
+        }
+        .stats {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+        .stats span {
+            margin: 0 15px;
+        }
+        
+        /* 控制按钮 */
+        .btn {
+            padding: 10px 25px;
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background-color: #0ea5e9;
+            transform: scale(1.05);
+        }
+
+        /* 游戏主体网格 */
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4列 */
+            gap: 15px;
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 卡片容器（负责3D效果） */
+        .card {
+            aspect-ratio: 1 / 1; /* 保持正方形 */
+            perspective: 1000px; /* 3D透视深度 */
+            cursor: pointer;
+        }
+
+        /* 卡片内部（用来翻转） */
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d; /* 保留3D空间 */
+        }
+
+        /* 被翻开时的状态 */
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* 卡片的正反面公共样式 */
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* 隐藏背面 */
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #94a3b8;
-            font-size: 1.2rem;
-            position: relative;
-            overflow: hidden;
+            font-size: 3rem; /* 表情符号大小 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        /* 覆盖一下主页返回按钮的样式 */
-        .btn-back {
-            display: inline-block;
-            margin-top: 20px;
+
+        /* 卡片背面（默认朝上，带问号） */
+        .card-back {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #38bdf8;
             color: #38bdf8;
-            text-decoration: none;
+            font-size: 2rem;
+        }
+
+        /* 卡片正面（印着图案，默认翻转到背面） */
+        .card-front {
+            background-color: #0f172a;
+            border: 2px solid #94a3b8;
+            transform: rotateY(180deg); /* 初始就翻转180度藏起来 */
+        }
+
+        /* 匹配成功后的高亮效果 */
+        .card.matched .card-front {
+            border-color: #10b981; /* 变成绿色边框 */
+            box-shadow: 0 0 15px #10b981;
+        }
+
+        /* 手机端适配 */
+        @media (max-width: 500px) {
+            #game-board {
+                grid-template-columns: repeat(3, 1fr); /* 手机端变3列 */
+                gap: 10px;
+            }
+            .card-front, .card-back {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 导航栏（复用你主页的结构，但链接指向主页） -->
+    <!-- 导航栏 -->
     <nav>
-        <div class="logo">我的小游戏</div>
+        <div class="logo">记忆翻牌</div>
         <ul class="nav-links">
-            <li><a href=" ">返回首页</a ></li>
+            <li><a href="index.html">返回首页</a></li>
         </ul>
     </nav>
 
-    <!-- 游戏主区域 -->
-    <div class="game-container">
-        <h2>准备开始游戏</h2>
-        <p>这是你未来小游戏的地盘</p >
-        
-        <!-- 以后你的游戏画面（比如方块、小人）就放在这里 -->
-        <div class="game-area" id="gameBoard">
-            点击下方按钮开始
+    <div class="game-header">
+        <h2>寻找相同的图案</h2>
+        <div class="stats">
+            <span>步数: <span id="moves">0</span></span>
+            <span>配对: <span id="matches">0</span> / 8</span>
         </div>
-
-        <!-- 控制按钮 -->
-        <div class="btn-group">
-            <button class="btn" id="startBtn" style="border: none; cursor: pointer;">开始游戏</button>
-        </div>
-        
-        <a href="index.html" class="btn-back">← 返回主页</a >
+        <button class="btn" id="restart-btn">重新开始</button>
     </div>
 
-    <!-- 预留 script 标签，下一步写 JavaScript 就写在这 -->
+    <!-- 游戏区域 -->
+    <div id="game-board"></div>
+
     <script>
-        // 简单测试一下按钮能不能用
-        document.getElementById('startBtn').addEventListener('click', function() {
-            document.getElementById('gameBoard').innerText = "游戏已开始！（现在这里还没内容）";
-        });
+        // 8对图案（可以根据你的喜好换成咒术回战的图，这里先用 Emoji）
+        const icons = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮'];
+        // 取前8个，然后复制一份，变成16张牌，最后打乱顺序
+        const gameCards = [...icons.slice(0, 8), ...icons.slice(0, 8)].sort(() => Math.random() - 0.5);
+
+        const gameBoard = document.getElementById('game-board');
+        const movesText = document.getElementById('moves');
+        const matchesText = document.getElementById('matches');
+        const restartBtn = document.getElementById('restart-btn');
+
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false; // 防止狂点导致bug
+        let moves = 0;
+        let matches = 0;
+
+        // 初始化游戏
+        function initGame() {
+            gameBoard.innerHTML = '';
+            moves = 0;
+            matches = 0;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            movesText.innerText = moves;
+            matchesText.innerText = matches;
+
+            // 重新打乱数组
+            const shuffledCards = [...icons.slice(0, 8), ...icons.slice(0, 8)].sort(() => Math.random() - 0.5);
+
+            // 动态生成卡片
+            shuffledCards.forEach(icon => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.icon = icon; // 把图案存在 dataset 里
+                
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-back">?</div>
+                        <div class="card-front">${icon}</div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+            });
+        }
+
+        // 翻牌逻辑
+        function flipCard() {
+            if (lockBoard) return; // 如果正在处理，不让点
+            if (this === firstCard) return; // 如果点的是同一张牌，无视
+            if (this.classList.contains('matched')) return; // 如果已经配对成功，无视
+
+            this.classList.add('flipped');
+
+            if (!firstCard) {
+                // 第一次翻牌
+                firstCard = this;
+                return;
+            }
+
+            // 第二次翻牌
+            secondCard = this;
+            moves++;
+            movesText.innerText = moves;
+            
+            checkForMatch();
+        }
+
+        // 检查两张牌是否一样
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.icon === secondCard.dataset.icon;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        // 配对成功
+        function disableCards() {
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            // 移除点击事件，不能再翻
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+
+            matches++;
+            matchesText.innerText = matches;
+
+            resetBoard();
+
+            // 如果8对全找到了，弹窗提示
+            if (matches === 8) {
+                setTimeout(() => {
+                    alert(`太棒了！你用了 ${moves} 步完成了游戏！`);
+                }, 500);
+            }
+        }
+
+        // 配对失败，翻回去
+        function unflipCards() {
+            lockBoard = true; // 锁定面板
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                resetBoard();
+            }, 1000); // 1秒后翻回去
+        }
+
+        // 重置当前翻牌状态
+        function resetBoard() {
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+        }
+
+        // 点击重新开始按钮
+        restartBtn.addEventListener('click', initGame);
+
+        // 页面加载时启动游戏
+        initGame();
     </script>
 </body>
 </html>

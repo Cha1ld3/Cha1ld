@@ -55,7 +55,15 @@ nav {
     align-items: center;
     text-align: center;
     padding: 0 20px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    
+    /* 让背景图完美居中并铺满 */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* 重点：原来的纯色背景改成深色半透明渐变，这样不仅文字清晰，图片也能透出来 */
+    background-color: rgba(15, 23, 42, 0.8);
+    background-blend-mode: overlay; /* 让背景色和背景图完美融合 */
 }
 
 .hero h1 {

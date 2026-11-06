@@ -162,7 +162,7 @@
         ];
 
         // 把链接转换成图片标签，占满整个卡片，保证不变形
-        const icons = imgPaths.map(link => `<img src="${link}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`);
+        const icons = imgPaths.map(link => `<img src="${link}" alt="加载中..." style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`);
         // 取前8个，然后复制一份，变成16张牌，最后打乱顺序
         const gameCards = [...icons.slice(0, 8), ...icons.slice(0, 8)].sort(() => Math.random() - 0.5);
 

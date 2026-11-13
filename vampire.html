@@ -44,6 +44,25 @@
             border-radius: 5px;
             font-weight: bold;
         }
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #38bdf8;
+            color: #0f172a;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+        #back-btn:hover {
+            background-color: #0ea5e9;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -95,7 +114,7 @@
         const keys = { w: false, a: false, s: false, d: false };
 
         // 监听键盘按下
-        window.addEventListener('keydown', (e) => {
+          window.addEventListener('keydown', (e) => {
             if (e.key === 'w' || e.key === 'W') keys.w = true;
             if (e.key === 'a' || e.key === 'A') keys.a = true;
             if (e.key === 's' || e.key === 'S') keys.s = true;
@@ -108,6 +127,34 @@
             if (e.key === 'a' || e.key === 'A') keys.a = false;
             if (e.key === 's' || e.key === 'S') keys.s = false;
             if (e.key === 'd' || e.key === 'D') keys.d = false;
+        });
+                // 手机端触摸控制
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            let touchX = e.touches[0].clientX;
+            let touchY = e.touches[0].clientY;
+            let dx = touchX - touchStartX;
+            let dy = touchY - touchStartY;
+            
+            touchStartX = touchX;
+            touchStartY = touchY;
+
+            if (dx > 5) player.x += player.speed;
+            if (dx < -5) player.x -= player.speed;
+            if (dy > 5) player.y += player.speed;
+            if (dy < -5) player.y -= player.speed;
+            
+            if (player.x < player.radius) player.x = player.radius;
+            if (player.x > width - player.radius) player.x = width - player.radius;
+            if (player.y < player.radius) player.y = player.radius;
+            if (player.y > height - player.radius) player.y = height - player.radius;
         });
 
         // 怪物、子弹、经验球数组

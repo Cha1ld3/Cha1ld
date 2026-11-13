@@ -327,7 +327,7 @@
 
                 // 2. 怪物碰到玩家扣血
                 if (dist < player.radius + e.radius) {
-                    player.hp -= 10;
+                    player.hp -= 2;
                     document.getElementById('hp').innerText = Math.max(0, player.hp);
                     // 用 splice 需要注意索引，因为我们在正向循环，所以标记移除
                     enemies.splice(i, 1);

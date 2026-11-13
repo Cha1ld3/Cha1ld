@@ -24,6 +24,7 @@
             pointer-events: none; /* 让鼠标穿透UI，不影响操作 */
             text-shadow: 2px 2px 2px #000;
         }
+            
         #game-over {
             position: absolute;
             top: 50%;
@@ -66,14 +67,61 @@
             background-color: #0ea5e9;
             transform: scale(1.05);
         }
+                /* 升级弹窗样式 */
+        #level-up-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #38bdf8;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            display: none; /* 默认隐藏 */
+            z-index: 2000;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
+        }
+        .upgrade-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .upgrade-options button {
+            padding: 15px;
+            font-size: 16px;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border: 2px solid #38bdf8;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .upgrade-options button:hover {
+            background-color: #38bdf8;
+            color: #0f172a;
+        }
     </style>
 </head>
 <body>
 
-    <div id="ui">
+        <div id="ui">
         <div>时间: <span id="time">0</span>s</div>
         <div>击杀: <span id="kills">0</span></div>
         <div>等级: <span id="level">1</span></div>
+        <!-- 新增：血量显示 -->
+        <div>血量: <span id="hp">100</span></div>
+    </div>
+
+    <!-- 新增：升级选择界面 (默认隐藏) -->
+    <div id="level-up-screen">
+        <h2>升级！请选择一项强化</h2>
+        <div class="upgrade-options">
+            <button onclick="applyUpgrade(1)">增加子弹数量 (散弹)</button>
+            <button onclick="applyUpgrade(2)">增加穿透 (穿透+1)</button>
+            <button onclick="applyUpgrade(3)">恢复一滴血量 (+10 HP)</button>
+        </div>
     </div>
 
     <div id="game-over">
@@ -87,89 +135,81 @@
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+                const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // 设置画布铺满屏幕
         let width = window.innerWidth;
         let height = window.innerHeight;
         canvas.width = width;
         canvas.height = height;
 
-        // 游戏核心状态
+        // 游戏状态
         let isGameOver = false;
+        let isPaused = false; // 暂停状态（选技能时用）
         let time = 0;
         let kills = 0;
         let level = 1;
         let exp = 0;
 
-        // 玩家设定
+        // 升级属性
+        let bulletCount = 1;   // 子弹数量
+        let bulletSpread = 0;  // 散布角度
+        let bulletPierce = 0;  // 穿透数量
+
+        // 玩家设定 (速度减半)
         const player = {
             x: width / 2,
             y: height / 2,
             radius: 15,
-            speed: 4,
+            speed: 2, // 原本是4，改成2
             color: '#38bdf8',
-            hp: 100
+            hp: 100,
+            maxHp: 100
         };
 
-        // 键盘状态
-        const keys = { w: false, a: false, s: false, d: false };
+        // 敌人数组
+        let enemies = [];
+        let bullets = [];
+        let orbs = [];
 
-        // 监听键盘按下
-          window.addEventListener('keydown', (e) => {
+        // 键盘控制
+        const keys = { w: false, a: false, s: false, d: false };
+        window.addEventListener('keydown', (e) => {
             if (e.key === 'w' || e.key === 'W') keys.w = true;
             if (e.key === 'a' || e.key === 'A') keys.a = true;
             if (e.key === 's' || e.key === 'S') keys.s = true;
             if (e.key === 'd' || e.key === 'D') keys.d = true;
         });
-
-        // 监听键盘松开
         window.addEventListener('keyup', (e) => {
             if (e.key === 'w' || e.key === 'W') keys.w = false;
             if (e.key === 'a' || e.key === 'A') keys.a = false;
             if (e.key === 's' || e.key === 'S') keys.s = false;
             if (e.key === 'd' || e.key === 'D') keys.d = false;
         });
-                // 手机端触摸控制
-        let touchStartX = 0;
-        let touchStartY = 0;
 
+        // 手机触屏控制
+        let touchStartX = 0, touchStartY = 0;
         canvas.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         });
-
         canvas.addEventListener('touchmove', (e) => {
             let touchX = e.touches[0].clientX;
             let touchY = e.touches[0].clientY;
             let dx = touchX - touchStartX;
             let dy = touchY - touchStartY;
-            
             touchStartX = touchX;
             touchStartY = touchY;
-
             if (dx > 5) player.x += player.speed;
             if (dx < -5) player.x -= player.speed;
             if (dy > 5) player.y += player.speed;
             if (dy < -5) player.y -= player.speed;
-            
-            if (player.x < player.radius) player.x = player.radius;
-            if (player.x > width - player.radius) player.x = width - player.radius;
-            if (player.y < player.radius) player.y = player.radius;
-            if (player.y > height - player.radius) player.y = height - player.radius;
         });
 
-        // 怪物、子弹、经验球数组
-        let enemies = [];
-        let bullets = [];
-        let orbs = [];
-
-        // 生成怪物
+        // 动态刷怪逻辑：随等级增加
         function spawnEnemy() {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
             
-            // 怪物从屏幕外随机边缘生成
             let x, y;
             if (Math.random() < 0.5) {
                 x = Math.random() < 0.5 ? 0 : width;
@@ -183,117 +223,122 @@
                 x: x,
                 y: y,
                 radius: 15,
-                speed: 1 + Math.random() * 0.5 + (time / 60), // 怪物随时间变快
+                speed: 2.5 + (level * 0.1), // 敌人速度比玩家快(玩家2)，随等级略微变快
                 color: '#ef4444',
                 hp: 1
             });
         }
 
-        // 玩家自动攻击
+        // 自动攻击
         setInterval(() => {
-            if (isGameOver) return;
-            // 找到最近的怪物
+            if (isGameOver || isPaused) return;
+            
+            // 找最近的怪
             let closestEnemy = null;
             let minDist = Infinity;
             enemies.forEach(enemy => {
-                let dx = enemy.x - player.x;
-                let dy = enemy.y - player.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < minDist) {
-                    minDist = dist;
-                    closestEnemy = enemy;
-                }
+                let dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                if (dist < minDist) { minDist = dist; closestEnemy = enemy; }
             });
 
-            // 如果有怪物，发射子弹
             if (closestEnemy) {
-                let dx = closestEnemy.x - player.x;
-                let dy = closestEnemy.y - player.y;
-                let angle = Math.atan2(dy, dx);
+                let baseAngle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
                 
-                bullets.push({
-                    x: player.x,
-                    y: player.y,
-                    radius: 5,
-                    speed: 7,
-                    vx: Math.cos(angle) * 7,
-                    vy: Math.sin(angle) * 7,
-                    color: '#fde047'
-                });
+                // 根据子弹数量计算散射
+                for (let i = 0; i < bulletCount; i++) {
+                    // 计算每发子弹的偏移角度
+                    let angleOffset = (i - (bulletCount - 1) / 2) * bulletSpread;
+                    let finalAngle = baseAngle + angleOffset;
+                    
+                    bullets.push({
+                        x: player.x,
+                        y: player.y,
+                        radius: 5,
+                        speed: 7,
+                        vx: Math.cos(finalAngle) * 7,
+                        vy: Math.sin(finalAngle) * 7,
+                        color: '#fde047',
+                        pierce: bulletPierce, // 记录穿透次数
+                        hitEnemies: [] // 记录已经打过的怪，防止重复扣血
+                    });
+                }
             }
-        }, 600); // 每0.6秒发射一次
+        }, 600);
 
         // 游戏主循环
         function update() {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
 
-            // 1. 移动玩家
+            // 玩家移动
             if (keys.w && player.y > player.radius) player.y -= player.speed;
             if (keys.s && player.y < height - player.radius) player.y += player.speed;
             if (keys.a && player.x > player.radius) player.x -= player.speed;
             if (keys.d && player.x < width - player.radius) player.x += player.speed;
 
-            // 2. 移动子弹
+            // 子弹移动与碰撞
             for (let i = bullets.length - 1; i >= 0; i--) {
                 let b = bullets[i];
                 b.x += b.vx;
                 b.y += b.vy;
-                // 超出屏幕删除
                 if (b.x < 0 || b.x > width || b.y < 0 || b.y > height) {
                     bullets.splice(i, 1);
+                    continue;
+                }
+
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    let e = enemies[j];
+                    // 如果这颗子弹已经打过这个怪，就跳过
+                    if (b.hitEnemies.includes(e)) continue; 
+
+                    if (Math.hypot(b.x - e.x, b.y - e.y) < e.radius + b.radius) {
+                        b.hitEnemies.push(e); // 记录打中
+                        
+                        if (b.pierce > 0) {
+                            b.pierce--; // 穿透减1，子弹继续飞
+                        } else {
+                            bullets.splice(i, 1); // 没穿透了，子弹消失
+                        }
+                        
+                        enemies.splice(j, 1); // 怪死
+                        kills++;
+                        document.getElementById('kills').innerText = kills;
+                        
+                        // 掉落经验
+                        orbs.push({ x: e.x, y: e.y, radius: 5 });
+                        
+                        if (b.pierce <= 0) break; // 子弹没了就跳出循环
+                    }
                 }
             }
 
-            // 3. 移动怪物并检测碰撞
+            // 怪物追踪
             for (let i = enemies.length - 1; i >= 0; i--) {
                 let e = enemies[i];
                 let dx = player.x - e.x;
                 let dy = player.y - e.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
+                let dist = Math.hypot(dx, dy);
                 
-                // 怪物追玩家
                 if (dist > 0) {
                     e.x += (dx / dist) * e.speed;
                     e.y += (dy / dist) * e.speed;
                 }
 
-                // 怪物碰到玩家
+                // 怪物碰玩家
                 if (dist < player.radius + e.radius) {
                     player.hp -= 10;
-                    enemies.splice(i, 1); // 碰完消失（类似自爆）
+                    document.getElementById('hp').innerText = Math.max(0, player.hp);
+                    enemies.splice(i, 1);
                     if (player.hp <= 0) gameOver();
-                    continue;
-                }
-
-                // 子弹碰到怪物
-                for (let j = bullets.length - 1; j >= 0; j--) {
-                    let b = bullets[j];
-                    let bdx = b.x - e.x;
-                    let bdy = b.y - e.y;
-                    let bdist = Math.sqrt(bdx*bdx + bdy*bdy);
-                    
-                    if (bdist < e.radius + b.radius) {
-                        // 怪物死亡
-                        enemies.splice(i, 1);
-                        bullets.splice(j, 1);
-                        kills++;
-                        document.getElementById('kills').innerText = kills;
-                        
-                        // 掉落经验球
-                        orbs.push({ x: e.x, y: e.y, radius: 5 });
-                        break; // 子弹打完一个怪就消失
-                    }
                 }
             }
 
-            // 4. 玩家拾取经验球
+            // 经验球拾取
             for (let i = orbs.length - 1; i >= 0; i--) {
                 let orb = orbs[i];
                 let dx = player.x - orb.x;
                 let dy = player.y - orb.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                
-                // 吸附效果
+                let dist = Math.hypot(dx, dy);
+
                 if (dist < 100) {
                     orb.x += (dx / dist) * 5;
                     orb.y += (dy / dist) * 5;
@@ -302,79 +347,94 @@
                 if (dist < player.radius + orb.radius) {
                     orbs.splice(i, 1);
                     exp++;
-                    // 升级
                     if (exp >= level * 5) {
-                        level++;
-                        exp = 0;
-                        player.speed += 0.5; // 升级加速度
-                        document.getElementById('level').innerText = level;
+                        levelUp();
                     }
                 }
             }
         }
 
-        // 绘制画面
+        // 渲染
         function draw() {
             ctx.clearRect(0, 0, width, height);
 
-            // 画经验球（绿色）
             orbs.forEach(orb => {
                 ctx.beginPath();
                 ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#10b981';
-                ctx.fill();
+                ctx.fillStyle = '#10b981'; ctx.fill();
             });
 
-            // 画怪物（红色）
             enemies.forEach(e => {
                 ctx.beginPath();
                 ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-                ctx.fillStyle = e.color;
-                ctx.fill();
+                ctx.fillStyle = e.color; ctx.fill();
             });
 
-            // 画子弹（黄色）
             bullets.forEach(b => {
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                ctx.fillStyle = b.color;
-                ctx.fill();
+                ctx.fillStyle = b.color; ctx.fill();
             });
 
-            // 画玩家（蓝色）
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fillStyle = player.color;
-            ctx.fill();
+            ctx.fillStyle = player.color; ctx.fill();
         }
 
-        // 游戏结束
+        // 升级逻辑
+        function levelUp() {
+            level++;
+            exp = 0;
+            document.getElementById('level').innerText = level;
+            
+            // 暂停游戏并显示弹窗
+            isPaused = true;
+            document.getElementById('level-up-screen').style.display = 'block';
+        }
+
+        // 应用升级选项
+        function applyUpgrade(choice) {
+            if (choice === 1) {
+                bulletCount++;
+                bulletSpread += 0.15; // 增加子弹数量的同时增加散布
+            } else if (choice === 2) {
+                bulletPierce += 1;
+            } else if (choice === 3) {
+                player.hp += 10;
+                document.getElementById('hp').innerText = player.hp;
+            }
+            
+            // 关闭弹窗，恢复游戏
+            document.getElementById('level-up-screen').style.display = 'none';
+            isPaused = false;
+        }
+
         function gameOver() {
             isGameOver = true;
             document.getElementById('final-time').innerText = time;
             document.getElementById('game-over').style.display = 'block';
         }
 
-        // 计时器
+        // 计时与动态刷怪
         setInterval(() => {
-            if (!isGameOver) {
+            if (!isGameOver && !isPaused) {
                 time++;
                 document.getElementById('time').innerText = time;
-                // 每两秒生成一个怪物
-                if (time % 2 === 0) spawnEnemy();
+                
+                // 刷新数量 = 等级数
+                for (let i = 0; i < level; i++) {
+                    spawnEnemy();
+                }
             }
         }, 1000);
 
-        // 核心动画循环
         function gameLoop() {
             update();
             draw();
             requestAnimationFrame(gameLoop);
         }
 
-        // 启动游戏
         gameLoop();
-
     </script>
 </body>
 </html>

@@ -245,15 +245,10 @@
             if (closestEnemy) {
                 let baseAngle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
                 
-                // 根据子弹数量计算散射
+                                // 根据子弹数量计算散射
                 for (let i = 0; i < bulletCount; i++) {
-                    // 计算每发子弹的偏移角度
+                    // 直接根据偏移量计算最终角度
                     let angleOffset = (i - (bulletCount - 1) / 2) * bulletSpread;
-                    
-                    // 核心限制：把偏移角度限制在正负 45 度（总跨度 90 度）以内
-                    let maxSpread = Math.PI / 4; // 90度的一半是45度，转换成弧度就是 PI/4
-                    angleOffset = Math.max(-maxSpread, Math.min(maxSpread, angleOffset));
-                    
                     let finalAngle = baseAngle + angleOffset;
                     
                     bullets.push({
@@ -429,9 +424,15 @@
 
         // 应用升级选项
         function applyUpgrade(choice) {
-            if (choice === 1) {
+                        if (choice === 1) {
                 bulletCount++;
-                bulletSpread += 0.15; // 增加子弹数量的同时增加散布
+                bulletSpread += 0.15; 
+                
+                // 核心限制：最大散布 90 度
+                // 90度等于 PI/2 弧度。如果超过这个值，就强制让它等于 1.57
+                if (bulletSpread > Math.PI / 2) {
+                    bulletSpread = Math.PI / 2;
+                }
             } else if (choice === 2) {
                 bulletPierce += 1;
             } else if (choice === 3) {

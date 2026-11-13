@@ -219,11 +219,12 @@
                 y = Math.random() < 0.5 ? 0 : height;
             }
 
-            enemies.push({
+                enemies.push({
                 x: x,
                 y: y,
                 radius: 15,
-                speed: 1.5 + (level * 0.1), // 敌人速度比玩家快(玩家2)，随等级略微变快
+                // 玩家速度是 2，这里初始设为 1.2，随等级微调，但最高封顶在 1.9
+                speed: Math.min(1.9, 1.2 + (level * 0.05)), 
                 color: '#ef4444',
                 hp: 1
             });
@@ -325,7 +326,7 @@
 
                 // 怪物碰玩家
                 if (dist < player.radius + e.radius) {
-                    player.hp -= 10;
+                    player.hp -= 2;
                     document.getElementById('hp').innerText = Math.max(0, player.hp);
                     enemies.splice(i, 1);
                     if (player.hp <= 0) gameOver();

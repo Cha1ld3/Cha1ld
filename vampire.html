@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸存者原型</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* 隐藏滚动条 */
+            background-color: #111;
+            font-family: sans-serif;
+            color: white;
+        }
+        canvas {
+            display: block;
+        }
+        /* 游戏UI界面 */
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            pointer-events: none; /* 让鼠标穿透UI，不影响操作 */
+            text-shadow: 2px 2px 2px #000;
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            display: none; /* 默认隐藏 */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #38bdf8;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div>时间: <span id="time">0</span>s</div>
+        <div>击杀: <span id="kills">0</span></div>
+        <div>等级: <span id="level">1</span></div>
+    </div>
+
+    <div id="game-over">
+        <h2>你被怪物淹没了！</h2>
+        <p>存活时间: <span id="final-time">0</span>秒</p>
+        <button onclick="location.reload()">重新开始</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 设置画布铺满屏幕
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        // 游戏核心状态
+        let isGameOver = false;
+        let time = 0;
+        let kills = 0;
+        let level = 1;
+        let exp = 0;
+
+        // 玩家设定
+        const player = {
+            x: width / 2,
+            y: height / 2,
+            radius: 15,
+            speed: 4,
+            color: '#38bdf8',
+            hp: 100
+        };
+
+        // 键盘状态
+        const keys = { w: false, a: false, s: false, d: false };
+
+        // 监听键盘按下
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'w' || e.key === 'W') keys.w = true;
+            if (e.key === 'a' || e.key === 'A') keys.a = true;
+            if (e.key === 's' || e.key === 'S') keys.s = true;
+            if (e.key === 'd' || e.key === 'D') keys.d = true;
+        });
+
+        // 监听键盘松开
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 'W') keys.w = false;
+            if (e.key === 'a' || e.key === 'A') keys.a = false;
+            if (e.key === 's' || e.key === 'S') keys.s = false;
+            if (e.key === 'd' || e.key === 'D') keys.d = false;
+        });
+
+        // 怪物、子弹、经验球数组
+        let enemies = [];
+        let bullets = [];
+        let orbs = [];
+
+        // 生成怪物
+        function spawnEnemy() {
+            if (isGameOver) return;
+            
+            // 怪物从屏幕外随机边缘生成
+            let x, y;
+            if (Math.random() < 0.5) {
+                x = Math.random() < 0.5 ? 0 : width;
+                y = Math.random() * height;
+            } else {
+                x = Math.random() * width;
+                y = Math.random() < 0.5 ? 0 : height;
+            }
+
+            enemies.push({
+                x: x,
+                y: y,
+                radius: 15,
+                speed: 1 + Math.random() * 0.5 + (time / 60), // 怪物随时间变快
+                color: '#ef4444',
+                hp: 1
+            });
+        }
+
+        // 玩家自动攻击
+        setInterval(() => {
+            if (isGameOver) return;
+            // 找到最近的怪物
+            let closestEnemy = null;
+            let minDist = Infinity;
+            enemies.forEach(enemy => {
+                let dx = enemy.x - player.x;
+                let dy = enemy.y - player.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestEnemy = enemy;
+                }
+            });
+
+            // 如果有怪物，发射子弹
+            if (closestEnemy) {
+                let dx = closestEnemy.x - player.x;
+                let dy = closestEnemy.y - player.y;
+                let angle = Math.atan2(dy, dx);
+                
+                bullets.push({
+                    x: player.x,
+                    y: player.y,
+                    radius: 5,
+                    speed: 7,
+                    vx: Math.cos(angle) * 7,
+                    vy: Math.sin(angle) * 7,
+                    color: '#fde047'
+                });
+            }
+        }, 600); // 每0.6秒发射一次
+
+        // 游戏主循环
+        function update() {
+            if (isGameOver) return;
+
+            // 1. 移动玩家
+            if (keys.w && player.y > player.radius) player.y -= player.speed;
+            if (keys.s && player.y < height - player.radius) player.y += player.speed;
+            if (keys.a && player.x > player.radius) player.x -= player.speed;
+            if (keys.d && player.x < width - player.radius) player.x += player.speed;
+
+            // 2. 移动子弹
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.x += b.vx;
+                b.y += b.vy;
+                // 超出屏幕删除
+                if (b.x < 0 || b.x > width || b.y < 0 || b.y > height) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // 3. 移动怪物并检测碰撞
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                let dx = player.x - e.x;
+                let dy = player.y - e.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                // 怪物追玩家
+                if (dist > 0) {
+                    e.x += (dx / dist) * e.speed;
+                    e.y += (dy / dist) * e.speed;
+                }
+
+                // 怪物碰到玩家
+                if (dist < player.radius + e.radius) {
+                    player.hp -= 10;
+                    enemies.splice(i, 1); // 碰完消失（类似自爆）
+                    if (player.hp <= 0) gameOver();
+                    continue;
+                }
+
+                // 子弹碰到怪物
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let b = bullets[j];
+                    let bdx = b.x - e.x;
+                    let bdy = b.y - e.y;
+                    let bdist = Math.sqrt(bdx*bdx + bdy*bdy);
+                    
+                    if (bdist < e.radius + b.radius) {
+                        // 怪物死亡
+                        enemies.splice(i, 1);
+                        bullets.splice(j, 1);
+                        kills++;
+                        document.getElementById('kills').innerText = kills;
+                        
+                        // 掉落经验球
+                        orbs.push({ x: e.x, y: e.y, radius: 5 });
+                        break; // 子弹打完一个怪就消失
+                    }
+                }
+            }
+
+            // 4. 玩家拾取经验球
+            for (let i = orbs.length - 1; i >= 0; i--) {
+                let orb = orbs[i];
+                let dx = player.x - orb.x;
+                let dy = player.y - orb.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                // 吸附效果
+                if (dist < 100) {
+                    orb.x += (dx / dist) * 5;
+                    orb.y += (dy / dist) * 5;
+                }
+
+                if (dist < player.radius + orb.radius) {
+                    orbs.splice(i, 1);
+                    exp++;
+                    // 升级
+                    if (exp >= level * 5) {
+                        level++;
+                        exp = 0;
+                        player.speed += 0.5; // 升级加速度
+                        document.getElementById('level').innerText = level;
+                    }
+                }
+            }
+        }
+
+        // 绘制画面
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 画经验球（绿色）
+            orbs.forEach(orb => {
+                ctx.beginPath();
+                ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#10b981';
+                ctx.fill();
+            });
+
+            // 画怪物（红色）
+            enemies.forEach(e => {
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                ctx.fillStyle = e.color;
+                ctx.fill();
+            });
+
+            // 画子弹（黄色）
+            bullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fillStyle = b.color;
+                ctx.fill();
+            });
+
+            // 画玩家（蓝色）
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+        }
+
+        // 游戏结束
+        function gameOver() {
+            isGameOver = true;
+            document.getElementById('final-time').innerText = time;
+            document.getElementById('game-over').style.display = 'block';
+        }
+
+        // 计时器
+        setInterval(() => {
+            if (!isGameOver) {
+                time++;
+                document.getElementById('time').innerText = time;
+                // 每两秒生成一个怪物
+                if (time % 2 === 0) spawnEnemy();
+            }
+        }, 1000);
+
+        // 核心动画循环
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 启动游戏
+        gameLoop();
+
+    </script>
+</body>
+</html>

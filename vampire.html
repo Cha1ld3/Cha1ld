@@ -44,10 +44,12 @@
             border-radius: 5px;
             font-weight: bold;
         }
+               /* 右上角返回主页按钮 */
         #back-btn {
-            position: absolute;
+            position: fixed;
             top: 20px;
             right: 20px;
+            z-index: 9999; /* 保证按钮永远在最上层 */
             padding: 10px 20px;
             background-color: #38bdf8;
             color: #0f172a;
@@ -55,10 +57,11 @@
             border-radius: 5px;
             font-weight: bold;
             font-size: 16px;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            transition: 0.3s;
+            box-shadow: 0 0 15px #38bdf8;
+            transition: all 0.3s ease;
         }
+
+        /* 鼠标悬停时的效果 */
         #back-btn:hover {
             background-color: #0ea5e9;
             transform: scale(1.05);

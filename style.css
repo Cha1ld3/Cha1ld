@@ -244,3 +244,40 @@ footer {
         text-shadow: 1px 1px 5px rgba(0, 0, 0, 1);
     }
 }
+/* 悬浮音乐按钮样式 */
+#music-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background-color: #1e293b;
+    color: #38bdf8;
+    border: 2px solid #38bdf8;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+}
+
+/* 鼠标悬停时的发光放大效果 */
+#music-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+}
+
+/* 正在播放时的旋转动画 */
+#music-btn.playing {
+    animation: spin 3s linear infinite;
+    background-color: #38bdf8;
+    color: #0f172a;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}

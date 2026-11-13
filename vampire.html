@@ -249,6 +249,11 @@
                 for (let i = 0; i < bulletCount; i++) {
                     // 计算每发子弹的偏移角度
                     let angleOffset = (i - (bulletCount - 1) / 2) * bulletSpread;
+                    
+                    // 核心限制：把偏移角度限制在正负 45 度（总跨度 90 度）以内
+                    let maxSpread = Math.PI / 4; // 90度的一半是45度，转换成弧度就是 PI/4
+                    angleOffset = Math.max(-maxSpread, Math.min(maxSpread, angleOffset));
+                    
                     let finalAngle = baseAngle + angleOffset;
                     
                     bullets.push({
@@ -312,27 +317,56 @@
                 }
             }
 
-            // 怪物追踪
-            for (let i = enemies.length - 1; i >= 0; i--) {
+                        // 怪物追踪与碰撞分离
+            for (let i = 0; i < enemies.length; i++) {
                 let e = enemies[i];
                 let dx = player.x - e.x;
                 let dy = player.y - e.y;
                 let dist = Math.hypot(dx, dy);
                 
+                // 1. 怪物追踪玩家
                 if (dist > 0) {
                     e.x += (dx / dist) * e.speed;
                     e.y += (dy / dist) * e.speed;
                 }
 
-                // 怪物碰玩家
+                // 2. 怪物碰到玩家扣血
                 if (dist < player.radius + e.radius) {
-                    player.hp -= 2;
+                    player.hp -= 10;
                     document.getElementById('hp').innerText = Math.max(0, player.hp);
+                    // 用 splice 需要注意索引，因为我们在正向循环，所以标记移除
                     enemies.splice(i, 1);
-                    if (player.hp <= 0) gameOver();
+                    i--; // 修正数组长度变化导致的索引错位
+                    if (player.hp <= 0) { gameOver(); return; }
+                    continue; // 这个怪已经死了，不需要算碰撞体积了
+                }
+
+                // 3. 怪物与怪物之间的碰撞体积（防止重叠）
+                for (let j = i + 1; j < enemies.length; j++) {
+                    let e2 = enemies[j];
+                    let edx = e2.x - e.x;
+                    let edy = e2.y - e.y;
+                    let edist = Math.hypot(edx, edy);
+                    
+                    // 如果两个怪物撞在一起了
+                    if (edist < e.radius + e2.radius) {
+                        // 计算重叠深度
+                        let overlap = (e.radius + e2.radius) - edist;
+                        
+                        // 防止除以0
+                        if (edist === 0) edist = 0.1; 
+                        
+                        // 把它们互相推开（各推一半的距离）
+                        let pushX = (edx / edist) * (overlap / 2);
+                        let pushY = (edy / edist) * (overlap / 2);
+                        
+                        e.x -= pushX;
+                        e.y -= pushY;
+                        e2.x += pushX;
+                        e2.y += pushY;
+                    }
                 }
             }
-
             // 经验球拾取
             for (let i = orbs.length - 1; i >= 0; i--) {
                 let orb = orbs[i];

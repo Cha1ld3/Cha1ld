@@ -98,5 +98,24 @@
     <div id="music-btn" title="播放/暂停背景音乐">
         🎵
     </div>
+        <script>
+        const bgm = document.getElementById('bgm');
+        const musicBtn = document.getElementById('music-btn');
+        
+        // 默认把音量调小一点，避免吓到访客
+        bgm.volume = 0.3; 
+
+        musicBtn.addEventListener('click', function() {
+            if (bgm.paused) {
+                bgm.play();
+                musicBtn.classList.add('playing'); // 加上旋转动画
+                musicBtn.innerHTML = '🎶'; // 换一个图标
+            } else {
+                bgm.pause();
+                musicBtn.classList.remove('playing'); // 移除动画
+                musicBtn.innerHTML = '🎵';
+            }
+        });
+    </script>
 </body>
 </html>
